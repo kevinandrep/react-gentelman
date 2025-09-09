@@ -1,19 +1,51 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "./App.css";
-import { Button } from "./components";
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [data, setData] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const countMore = () => {
-    setCount((count) => count + 1);
-  };
-
-  return (
-    <>
-      <Button label={`Count is ${count}`} parentMethod={countMore}></Button>
-    </>
+  const consoleLoader = useCallback(
+    (loadingValue: boolean) => {
+      setLoading(loadingValue);
+      console.info(loading);
+    },
+    [loading]
   );
+
+  const fetchData = useCallback(async () => {
+    consoleLoader(true);
+    try {
+      const response = await fetch(
+        "https://jsonplaceholder.typicode.com/todos/1"
+      );
+      if (!response.ok) {
+        throw new Error("Error en la solicitud");
+      }
+
+      const jsonData = await response.json();
+      setData(jsonData);
+    } catch (error) {
+      setError(error as string);
+    } finally {
+      consoleLoader(false);
+    }
+  }, [consoleLoader]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+  return <div>{JSON.stringify(data)} </div>;
 }
 
 export default App;
